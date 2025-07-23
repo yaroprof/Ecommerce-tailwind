@@ -1,6 +1,11 @@
 import { useRoutes, BrowserRouter } from 'react-router-dom';
-import { ShoppingCartProvider } from '../../context';
-import { HomePage, NotFound, MyOrders, DetailProduct, CartShoppingPage, OrderPage, LastOrderPage } from '../';
+import { CartProvider } from '../../context/CartContext'; // Заміна на CartProvider
+import { ProductsProvider } from '../../context/ProductsContext'; // Заміна на ProductsProvider
+import { UIProvider } from '../../context/UIContext'; // Заміна на UIProvider
+
+
+// import { ShoppingCartProvider } from '../../context';
+import { HomePage, NotFound, MyOrders, DetailProduct, CartShoppingPage, OrderPage, LastOrderPage, PaymentPage } from '../';
 import { NavBar, Footer, CheckoutSideMenu } from '../../components';
 import './App.css';
 
@@ -18,9 +23,13 @@ const AppRoutes = () => {
         { path: '/my-orders/last', element: <LastOrderPage /> },
         { path: '/my-orders/:id', element: <OrderPage /> },
         { path: '/my-orders', element: <MyOrders /> },
+        { path: '/payment', element: <PaymentPage /> }, // Додано маршрут для PaymentPage
+
         // { path: '/sign-in', element: <Signin /> },
-        { path: '/*', element: <NotFound /> },
-        { path: '/product/:id', element: <DetailProduct /> }
+        { path: '/*', element: <NotFound /> }, // 👈 catch-all в кінці
+
+        { path: '/product/:id', element: <DetailProduct /> },
+
     ]);
 
     return routes;
@@ -28,13 +37,31 @@ const AppRoutes = () => {
 
 export const App = () => {
     return (
-        <ShoppingCartProvider>
-            <BrowserRouter>
-                <AppRoutes />
-                <NavBar />
-                <Footer />
-                <CheckoutSideMenu />
-            </BrowserRouter>
-        </ShoppingCartProvider>
+        <CartProvider>
+            <ProductsProvider>
+                <UIProvider>
+                    <BrowserRouter>
+                        <AppRoutes />
+                        <NavBar />
+                        <Footer />
+                        <CheckoutSideMenu />
+                    </BrowserRouter>
+
+                </UIProvider>
+            </ProductsProvider>
+        </CartProvider>
+
+
+
+        // <ShoppingCartProvider>
+        //     <BrowserRouter>
+        //         <AppRoutes />
+        //         <NavBar />
+        //         <Footer />
+        //         <CheckoutSideMenu />
+        //     </BrowserRouter>
+        // </ShoppingCartProvider>
     )
 };
+
+

@@ -39,8 +39,8 @@ export const Footer = () => {
                 )}
             </div>
             <footer className='flex justify-between items-center botton-0 py-3 px-8 text-sm font-light'>
-                <p>Shopi</p>
-                <p>By <a href='https://silviajcn.vercel.app/' target='_blank' rel='noreferrer' className='font-semibold'>Silvi</a> 💚</p>
+                <p>Shoper</p>
+                <p>By <a href='https://silviajcn.vercel.app/' target='_blank' rel='noreferrer' className='font-semibold'>Codder</a> 💚</p>
             </footer>
         </div>
     )

@@ -1,100 +1,281 @@
 import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Context } from '../context';
-import { deliveryDate, today } from '../utils';
+import { useNavigate, useParams } from 'react-router-dom';
+// import { ProductsContext, UIContext, CartContext } from '../context'; 
+import { ProductsContext } from '../context/ProductsContext';
+import { UIContext } from '../context/UIContext';
+import { CartContext } from '../context/CartContext';
+
+
+import { deliveryDate, today, GoToTop } from '../utils';
 import { Layout } from '../components';
 import { ChevronLeftIcon, StarIcon, ShoppingCartIcon } from '@heroicons/react/24/solid';
-import { GoToTop } from '../utils';
 
 export const DetailProduct = () => {
-
-    const context = useContext(Context);
+    const { items } = useContext(ProductsContext);
+    const { showProductDetail, openCheckoutSideMenu, closeProductDetail } = useContext(UIContext);
+    const { cartProducts, setCartProducts } = useContext(CartContext); // Додано для кошика
+    const navigate = useNavigate();
+    const { id } = useParams();
     GoToTop();
 
-    const navigate = useNavigate();
-    const onNavigateBack = () => {
-        navigate(-1);
-    }
+    const [image, setImage] = useState('');
 
-    //Image Exchange
-    const [imagen, setImagen] = useState(context.showProductDetail.images[0]);
-    const cambiarImagen =(element) => {
-        setImagen(element)
-    }
     useEffect(() => {
-    }, [setImagen]);
+        const product = items.find(item => item.id === id);
+        if (!product) {
+            navigate('/404');
+        } else {
+            setImage(product.images?.[0] || '');
+        }
+    }, [id, items, navigate]);
 
-    // Agregar al carrito
     const addProductsToCart = (productData) => {
-        context.setCartProducts([...context.cartProducts, productData]);
-        context.openCheckoutSideMenu();
-    }
-    
+        if (!productData || !productData.id || !productData.title || !productData.price || !productData.images) {
+            console.error('Invalid product data:', productData);
+            return;
+        }
+        const existingProduct = cartProducts.find((item) => item.id === productData.id);
+        let updatedCart;
+        if (existingProduct) {
+            updatedCart = cartProducts.map((item) =>
+                item.id === productData.id
+                    ? { ...item, quantity: (item.quantity || 1) + 1 }
+                    : item
+            );
+        } else {
+            updatedCart = [...cartProducts, { ...productData, quantity: 1 }];
+        }
+        setCartProducts(updatedCart);
+        console.log('Updated cart:', updatedCart);
+        openCheckoutSideMenu();
+        closeProductDetail();
+    };
+
+    const renderStars = (rate = 0) => {
+        return Array(5)
+            .fill()
+            .map((_, index) => (
+                <StarIcon
+                    key={index}
+                    className={`h-5 w-5 ${rate >= index + 1 ? 'text-yellow-400' : 'text-gray-300'}`}
+                />
+            ));
+    };
+
+    // Використовуємо продукт із items замість showProductDetail
+    const product = items.find(item => item.id === id) || {};
+
     return (
-        <>
-            <Layout>
-                <div className='w-full max-w-screen-lg'>
-                    <button className='flex flex-grow items-center font-light' onClick={onNavigateBack}>
-                        <ChevronLeftIcon className='h-4 w-4 text-black'></ChevronLeftIcon> Return
-                    </button>
-
-                    <div className='flex flex-column w-full mb-10 mt-10'>
-                        <figure className='w-4/12'>
-                            {
-                                imagen !== undefined?
-                                <img className='w-full h-60 object-contain' src={imagen} alt={`Image ${context.showProductDetail.title}`} />
-                                    :
-                                <img className='w-full h-60 object-contain' src={context.showProductDetail.images[0]} alt={`Image ${context.showProductDetail.title}`} />    
-                            }
-                            <div className='flex flex-row justify-between w-4/12 mt-2'>
-                                <img className='border  mb-2 object-contain h-20 mr-2' src={context.showProductDetail.images[0]} alt={`Image ${context.showProductDetail.title}`} onClick={()=>cambiarImagen(context.showProductDetail.images[0])} />
-                                <img className='border  mb-2 object-contain h-20 mr-2' src={context.showProductDetail.images[1]} alt={`Image ${context.showProductDetail.title}`} onClick={()=>cambiarImagen(context.showProductDetail.images[1])} />
-                                <img className='border mb-2 object-cover h-20' src={context.showProductDetail.images[2]} alt={`Image ${context.showProductDetail.title}`} onClick={()=>cambiarImagen(context.showProductDetail.images[2])} />
-                            </div>
-                        </figure>
-                    
-                        <div className='w-3/6 px-8'>
-                            <h1 className='text-black mb-5 font-bold text-4xl'>{context.showProductDetail.title}</h1>
-                            <div className='flex flex-row mb-5'>
-                                <p className={context.showProductDetail.rate >= 1 ? 'good' : 'bad'}><StarIcon /></p>
-                                <p className={context.showProductDetail.rate >= 2 ? 'good' : 'bad'}><StarIcon /></p>
-                                <p className={context.showProductDetail.rate >= 3 ? 'good' : 'bad'}><StarIcon /></p>
-                                <p className={context.showProductDetail.rate >= 4 ? 'good' : 'bad'}><StarIcon /></p>
-                                <p className={context.showProductDetail.rate >= 5 ? 'good' : 'bad'}><StarIcon /></p>
-                            </div>
-                            <div className='flex flex-row justify-between'>
-                                <div>
-                                    <p>Brand: <span className='font-semibold'>{context.showProductDetail.brand}</span></p>
-                                    <p>Stock available: <span className='font-semibold'>{context.showProductDetail.quantity}</span></p>
-                                </div>
-                                <span className='font-light'>{context.showProductDetail.category}</span>
-                            </div>
-                            <p className='font-bold mt-4 flex flex-row justify-end'>Price: <span className='text-red-800 text-2xl ml-4'>${context.showProductDetail.price}</span></p>
-
-                            <p className='font-bold mt-4'>About this article</p>
-                            <p>{context.showProductDetail.description}</p>
+        <Layout>
+            <div className="w-full max-w-screen-lg mx-auto">
+                <button
+                    className="flex items-center mb-6 text-gray-600 hover:text-gray-900 transition-colors"
+                    onClick={() => navigate(-1)}
+                >
+                    <ChevronLeftIcon className="h-4 w-4 mr-1" /> Return
+                </button>
+                <div className="flex flex-col md:flex-row gap-6 mb-10">
+                    <figure className="w-full md:w-4/12">
+                        <img
+                            className="w-full h-64 object-contain rounded-lg"
+                            src={image || ''}
+                            alt={`Image ${product.title || 'product'}`}
+                        />
+                        <div className="flex flex-row justify-between mt-4">
+                            {product.images?.slice(0, 3).map((img, index) => (
+                                <img
+                                    key={index}
+                                    className="w-20 h-20 object-contain border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500"
+                                    src={img}
+                                    alt={`Thumbnail ${product.title}`}
+                                    onClick={() => setImage(img)}
+                                />
+                            ))}
                         </div>
-
-                        <div className='w-1/6'>
-                            <span className='text-red-800 text-2xl'>${context.showProductDetail.price}</span>
-                            <p>Free shipping!</p>
-                            <p className='text-xs mb-4'>Arrives between <span className='font-bold'>{deliveryDate(today, 'dd/mm/yy', 5)} and el {deliveryDate(today, 'dd/mm/yy', 10)}</span></p>
-                            
-                            <button
-                                type='button'
-                                className='flex flex-row items-center bg-orange-200 font-bold border-3 py-1 px-2 rounded-lg'
-                                onClick={() => addProductsToCart(context.showProductDetail)}
-                            >
-                                <ShoppingCartIcon className='h-5 w-5 text-black mr-1'></ShoppingCartIcon> Add
-                            </button>
-                            <button type='button'></button>
+                    </figure>
+                    <div className="w-full md:w-4/12">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-4">{product.title || 'No Title'}</h1>
+                        <div className="flex space-x-1 mb-4">{renderStars(product.rate)}</div>
+                        <div className="space-y-2 text-gray-600">
+                            <p>Brand: <span className="font-semibold">{product.brand || 'N/A'}</span></p>
+                            <p>Stock: <span className="font-semibold">{product.quantity || 0}</span></p>
+                            <p className="text-sm">{product.category || 'N/A'}</p>
                         </div>
+                        <p className="font-bold mt-4 text-right">
+                            Price: <span className="text-red-600 text-2xl ml-2">${product.price || 0}</span>
+                        </p>
+                        <p className="mt-4 text-gray-600">About this article</p>
+                        <p className="text-sm text-gray-600">{product.description || 'No description'}</p>
                     </div>
-                <figure>
-                    <img src={context.showProductDetail.banner} alt={`Banner ${context.showProductDetail.title}`} className='w-screen rounded-lg' />
-                </figure>
+                    <div className="w-full md:w-2/12 p-4 bg-gray-50 rounded-lg shadow-md">
+                        <p className="text-2xl font-bold text-red-600">${product.price || 0}</p>
+                        <p className="text-green-600 font-semibold">Free shipping!</p>
+                        <p className="text-xs text-gray-500">
+                            Arrives between{' '}
+                            <span className="font-medium">
+                                {deliveryDate(today, 'dd/mm/yy', 5)} - {deliveryDate(today, 'dd/mm/yy', 10)}
+                            </span>
+                        </p>
+                        <button
+                            type="button"
+                            className="flex items-center justify-center w-full mt-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                            onClick={() => addProductsToCart(product)}
+                        >
+                            <ShoppingCartIcon className="h-5 w-5 mr-2" /> Add to Cart
+                        </button>
+                    </div>
                 </div>
-            </Layout>
-        </>
-    )
-}; 
+                {product.banner && (
+                    <figure className="w-full mt-6">
+                        <img
+                            src={product.banner}
+                            alt={`Banner ${product.title || 'product'}`}
+                            className="w-full h-48 object-cover rounded-lg"
+                        />
+                    </figure>
+                )}
+            </div>
+        </Layout>
+    );
+};
+
+// // v.3.0
+// import { useContext, useEffect, useState } from 'react';
+// import { useNavigate, useParams } from 'react-router-dom';
+// import { ProductsContext } from '../context/ProductsContext';
+// import { UIContext } from '../context/UIContext';
+// import { CartContext } from '../context/CartContext';
+// import { deliveryDate, today, GoToTop } from '../utils';
+// import { Layout } from '../components';
+// import { ChevronLeftIcon, StarIcon, ShoppingCartIcon } from '@heroicons/react/24/solid';
+
+// export const DetailProduct = () => {
+//     const { items } = useContext(ProductsContext);
+//     const { showProductDetail, openCheckoutSideMenu, closeProductDetail } = useContext(UIContext);
+//     const navigate = useNavigate();
+//     const { id } = useParams();
+//     GoToTop();
+
+//     const [image, setImage] = useState(showProductDetail?.images?.[0] || '');
+
+//     useEffect(() => {
+//         const product = items.find(item => item.id === id);
+//         if (!product) {
+//             navigate('/404');
+//         } else {
+//             setImage(product.images?.[0] || '');
+//         }
+//     }, [id, items, navigate]);
+
+//     const addProductsToCart = (productData) => {
+//         if (!productData || !productData.id) {
+//             console.error('Invalid product data:', productData);
+//             return;
+//         }
+//         // Тут потрібно отримати cartProducts і setCartProducts з CartContext
+//         // Для цього додайте імпорт CartContext
+//         const { cartProducts, setCartProducts } = useContext(CartContext); // Додайте CartContext
+//         const existingProduct = cartProducts.find((item) => item.id === productData.id);
+//         let updatedCart;
+//         if (existingProduct) {
+//             updatedCart = cartProducts.map((item) =>
+//                 item.id === productData.id
+//                     ? { ...item, quantity: (item.quantity || 1) + 1 }
+//                     : item
+//             );
+//         } else {
+//             updatedCart = [...cartProducts, { ...productData, quantity: 1 }];
+//         }
+//         setCartProducts(updatedCart);
+//         console.log('Updated cart:', updatedCart);
+//         openCheckoutSideMenu();
+//         closeProductDetail();
+//     };
+
+//     const renderStars = (rate = 0) => {
+//         return Array(5)
+//             .fill()
+//             .map((_, index) => (
+//                 <StarIcon
+//                     key={index}
+//                     className={`h-5 w-5 ${rate >= index + 1 ? 'text-yellow-400' : 'text-gray-300'}`}
+//                 />
+//             ));
+//     };
+
+//     const product = showProductDetail || {};
+
+//     return (
+//         <Layout>
+//             <div className="w-full max-w-screen-lg mx-auto">
+//                 <button
+//                     className="flex items-center mb-6 text-gray-600 hover:text-gray-900 transition-colors"
+//                     onClick={() => navigate(-1)}
+//                 >
+//                     <ChevronLeftIcon className="h-4 w-4 mr-1" /> Return
+//                 </button>
+//                 <div className="flex flex-col md:flex-row gap-6 mb-10">
+//                     <figure className="w-full md:w-4/12">
+//                         <img
+//                             className="w-full h-64 object-contain rounded-lg"
+//                             src={image || ''}
+//                             alt={`Image ${product.title || 'product'}`}
+//                         />
+//                         <div className="flex flex-row justify-between mt-4">
+//                             {product.images?.slice(0, 3).map((img, index) => (
+//                                 <img
+//                                     key={index}
+//                                     className="w-20 h-20 object-contain border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500"
+//                                     src={img}
+//                                     alt={`Thumbnail ${product.title}`}
+//                                     onClick={() => setImage(img)}
+//                                 />
+//                             ))}
+//                         </div>
+//                     </figure>
+//                     <div className="w-full md:w-4/12">
+//                         <h1 className="text-3xl font-bold text-gray-800 mb-4">{product.title || 'No Title'}</h1>
+//                         <div className="flex space-x-1 mb-4">{renderStars(product.rate)}</div>
+//                         <div className="space-y-2 text-gray-600">
+//                             <p>Brand: <span className="font-semibold">{product.brand || 'N/A'}</span></p>
+//                             <p>Stock: <span className="font-semibold">{product.quantity || 0}</span></p>
+//                             <p className="text-sm">{product.category || 'N/A'}</p>
+//                         </div>
+//                         <p className="font-bold mt-4 text-right">
+//                             Price: <span className="text-red-600 text-2xl ml-2">${product.price || 0}</span>
+//                         </p>
+//                         <p className="mt-4 text-gray-600">About this article</p>
+//                         <p className="text-sm text-gray-600">{product.description || 'No description'}</p>
+//                     </div>
+//                     <div className="w-full md:w-2/12 p-4 bg-gray-50 rounded-lg shadow-md">
+//                         <p className="text-2xl font-bold text-red-600">${product.price || 0}</p>
+//                         <p className="text-green-600 font-semibold">Free shipping!</p>
+//                         <p className="text-xs text-gray-500">
+//                             Arrives between{' '}
+//                             <span className="font-medium">
+//                                 {deliveryDate(today, 'dd/mm/yy', 5)} - {deliveryDate(today, 'dd/mm/yy', 10)}
+//                             </span>
+//                         </p>
+//                         <button
+//                             type="button"
+//                             className="flex items-center justify-center w-full mt-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+//                             onClick={() => addProductsToCart(product)}
+//                         >
+//                             <ShoppingCartIcon className="h-5 w-5 mr-2" /> Add to Cart
+//                         </button>
+//                     </div>
+//                 </div>
+//                 {product.banner && (
+//                     <figure className="w-full mt-6">
+//                         <img
+//                             src={product.banner}
+//                             alt={`Banner ${product.title || 'product'}`}
+//                             className="w-full h-48 object-cover rounded-lg"
+//                         />
+//                     </figure>
+//                 )}
+//             </div>
+//         </Layout>
+//     );
+// };
+

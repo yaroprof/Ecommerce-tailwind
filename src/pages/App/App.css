@@ -2,14 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-    background: #FFFAF4;
+/* Base styles */
+@layer base {
+  body {
+    background: #FFFAF4; /* або bg-amber-50 для Tailwind теми */
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+  }
 }
 
-.fondo {
-    background: #F7EFE5;
+/* Custom scrollbar styles (WebKit only, limited support in Firefox/Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  border-radius: 10px;
 }
-
-.fondo2 {
-    background: #FFFAF4;
+::-webkit-scrollbar-thumb {
+  background: rgba(175, 175, 175, 0.637);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 102, 102, 0.637);
 }

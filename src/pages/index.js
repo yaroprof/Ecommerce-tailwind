@@ -7,3 +7,4 @@ export * from './OrderPage';
 export * from './Signin';
 export * from './DetailProduct';
 export * from './HomePage';
+export * from './PaymentPage'; // Додано експорт PaymentPage

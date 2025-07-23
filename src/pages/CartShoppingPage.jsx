@@ -1,21 +1,22 @@
 import { useContext } from 'react';
 import { Layout, OrderCard } from '../components';
 import { GoToTop } from '../utils';
-import { Context } from '../context';
+// import { Context } from '../context';
 import { Link } from 'react-router-dom';
 import { totalPrice } from '../utils';
 import { useCreateDate } from '../hooks';
 
 export const CartShoppingPage = () => {
-
     const context = useContext(Context);
+    console.log('CartShoppingPage cartProducts:', context.cartProducts); // Діагностика
+
     const date = useCreateDate();
     GoToTop();
 
     const handleDelete = (id) => {
-        const filteredProducts = context.cartProducts.filter(prod => prod.id != id);
+        const filteredProducts = context.cartProducts.filter(prod => prod.id !== id);
         context.setCartProducts(filteredProducts);
-    }
+    };
 
     const handleCheckout = () => {
         const orderToAdd = {
@@ -24,21 +25,24 @@ export const CartShoppingPage = () => {
             products: context.cartProducts,
             totalProducts: context.cartProducts.length,
             totalPrice: totalPrice(context.cartProducts)
-        }
+        };
 
         context.setOrder([...context.order, orderToAdd]);
         context.setCartProducts([]);
         context.closeCheckoutSideMenu();
-        //context.setSearchByTitle(null);
-    }
+    };
 
     return (
         <Layout>
-            <h1 className='mb-5 font-bold text-4xl'>My shopping cart</h1>
-
-            <div className='flex flex-grow justify-between items-start max-w-screen-lg'>
-                <div className='overflow-y-scroll px-20'>
-                    {
+            <h1 className="mb-6 text-3xl font-bold text-gray-900 tracking-tight">
+                My Shopping Cart
+            </h1>
+            <div style={{ color: 'red' }}>CartShoppingPage.jsx page</div>
+            <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+                <div className="flex-1 max-h-[70vh] overflow-y-auto pr-4">
+                    {context.cartProducts.length === 0 ? (
+                        <p className="text-gray-500 text-center py-10">Your cart is empty</p>
+                    ) : (
                         context.cartProducts.map((prod) => (
                             <OrderCard
                                 key={prod.id}
@@ -46,40 +50,41 @@ export const CartShoppingPage = () => {
                                 title={prod.title}
                                 imageUrl={prod.images[0]}
                                 price={prod.price}
+                                quantity={prod.quantity}
                                 handleDelete={handleDelete}
                             />
                         ))
-                    }
+                    )}
                 </div>
-                <div className='px-4 mb-4'>
-                    <p className='flex flex-row justify-between items-center'>
-                        <span className='mr-5'>Total in the shopping cart:</span>
-                        
-                        <span className='font-medium text-2xl text-red-800'>${totalPrice(context.cartProducts)}</span>
-                    </p>
-                    {
-                        context.productsCount !== 0 &&
-                        <div>
-                            <Link to='/my-orders/last'>
+                <div className="lg:w-80 bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-medium text-gray-700">Total:</span>
+                        <span className="text-2xl font-bold text-red-600">
+                            ${totalPrice(context.cartProducts).toFixed(2)}
+                        </span>
+                    </div>
+                    {context.productsCount !== 0 && (
+                        <div className="space-y-3">
+                            <Link to="/my-orders/last">
                                 <button
-                                    type='button'
-                                    className='border-2 p-2 rounded-lg w-full mt-3 bg-orange-200' 
+                                    type="button"
+                                    className="w-full py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-lg font-medium hover:from-orange-500 hover:to-orange-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     onClick={() => handleCheckout()}
                                 >
-                                    Buy
+                                    Proceed to Checkout
                                 </button>
                             </Link>
                             <button
-                                type='button'
+                                type="button"
+                                className="w-full py-3 bg-white text-red-600 border border-red-300 rounded-lg font-medium hover:bg-red-50 transition-all duration-200 shadow-sm hover:shadow-md"
                                 onClick={() => context.setCartProducts([])}
-                                className='border-2 p-2 rounded-lg w-full bg-red-200 mt-3'
                             >
-                                Delete all items
+                                Clear Cart
                             </button>
                         </div>
-                    }
+                    )}
                 </div>
             </div>
         </Layout>
-    )
+    );
 };
