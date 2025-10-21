@@ -1,17 +1,21 @@
-// v.2.0
 import { useContext } from 'react';
 import { Layout, OrderCard } from '../components';
-import { Context } from '../context';
 import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '@heroicons/react/24/solid';
 import { GoToTop } from '../utils';
+import { CartContext } from '../context/CartContext'; // <-- ПРАВИЛЬНИЙ ІМПОРТ
 
 export const LastOrderPage = () => {
-    const context = useContext(Context);
+    // Використовуємо CartContext
+    const { order } = useContext(CartContext); // <-- Деструктуризуємо 'order' безпосередньо з CartContext
     GoToTop();
 
     // Отримуємо останнє замовлення з захистом від помилок
-    const lastOrder = context.order?.slice(-1)[0] || {};
+    // Перевіряємо, що 'order' існує і є масивом
+    const lastOrder = order && Array.isArray(order) && order.length > 0
+                      ? order[order.length - 1] // Беремо останній елемент масиву 'order'
+                      : {}; // Якщо 'order' порожній або не визначений, повертаємо порожній об'єкт
+
     const total = lastOrder.products?.reduce((sum, prod) => sum + (prod.price || 0), 0) || 0;
 
     return (
@@ -65,41 +69,3 @@ export const LastOrderPage = () => {
         </Layout>
     );
 };
-
-// v.1.0
-// import { useContext } from 'react';
-// import { Layout, OrderCard } from '../components'
-// import { Context } from '../context';
-// import { Link } from 'react-router-dom';
-// import { ChevronRightIcon } from '@heroicons/react/24/solid';
-// import { GoToTop } from '../utils';
-
-// export const LastOrderPage = () => {
-
-//     const context = useContext(Context);
-//     GoToTop();
-
-//     return (
-//         <Layout>
-//             <div className='flex justify-center items-center font-light w-1/2 relative'>
-//                 <h1 className='mb-5 font-bold text-2xl'>Order</h1>
-//                 <Link to='/my-orders' className='absolute right-0'>
-//                     <ChevronRightIcon className='h-4 w-4 text-black'></ChevronRightIcon>
-//                 </Link>
-//             </div>
-//             <div className='w-1/2 mt-10'>
-//                 {
-//                     context.order?.slice(-1)[0].products.map((prod) => (
-//                         <OrderCard
-//                             key={prod.id}
-//                             id={prod.id}
-//                             title={prod.title}
-//                             imageUrl={prod.images[0]}
-//                             price={prod.price}
-//                         />
-//                     ))
-//                 }
-//             </div>
-//         </Layout>
-//     )
-// };

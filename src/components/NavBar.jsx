@@ -1,215 +1,157 @@
-// v3.0
 import { NavLink } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { CartContext } from '../context/CartContext';
-// import { CartContext } from '../context'; 
-import { ShoppingCartIcon } from '@heroicons/react/24/solid';
+import { ProductsContext } from '../context/ProductsContext';
+import { ShoppingCartIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
-const activeStyle = "underline underline-offset-4 text-blue-600 font-medium";
+const activeStyle = 'text-indigo-600 font-semibold underline underline-offset-4';
 
 export const NavBar = () => {
-    const { productsCount } = useContext(CartContext); // Оновлено до CartContext
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { productsCount } = useContext(CartContext);
+  const { items, setSearchByCategory, setSearchByTitle, searchByTitle } = useContext(ProductsContext);
 
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [categories, setCategories] = useState(['all']);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const toggleMenu = () => setIsMenuOpen(prev => !prev);
+  const toggleSearch = () => setShowSearch(prev => !prev);
+
+  const handleCategoryClick = (category) => {
+    setSearchByCategory(category === 'all' ? '' : category);
+    setSearchByTitle('');
+    setIsMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (items?.length > 0) {
+      const unique = [...new Set(items.map(item => item.category))];
+      setCategories(['all', ...unique]);
+    }
+  }, [items]);
+
+  useEffect(() => {
+    const handleScroll = () => setIsAtTop(window.scrollY < 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const nav = document.querySelector('nav');
+      if (showSearch && nav && !nav.contains(e.target)) {
+        setShowSearch(false);
+      }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSearch]);
 
-    return (
-        <nav className="flex justify-between items-center fixed top-0 w-full bg-white shadow-md z-10 py-4 px-6 md:px-10 transition-all duration-300">
-            <div className="flex items-center">
-                <button
-                    className="md:hidden text-gray-800 hover:text-blue-600 p-2"
-                    onClick={toggleMenu}
-                >
-                    {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-                </button>
-                <ul className="flex items-center gap-6">
-                    <li className="font-bold text-xl text-gray-800">
-                        <NavLink to="/" onClick={() => { toggleMenu(); }} className="hover:text-blue-600 transition-colors">Shopi</NavLink>
-                    </li>
-                </ul>
-            </div>
+  return (
+    <nav
+      className={`fixed top-0 w-full z-20 transition-all duration-300 
+        ${isAtTop ? 'bg-white/80 backdrop-blur-md border-b-0 shadow-none' : 'bg-white border-b shadow-sm'} 
+        px-6 py-3 md:px-12 flex items-center justify-between flex-wrap gap-4`}
+    >
+      {/* LEFT: Logo */}
+      <div className="flex items-center gap-4">
+        <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
+          <NavLink to="/" onClick={() => { handleCategoryClick('all'); setIsMenuOpen(false); }}>
+            Shoper
+          </NavLink>
+        </h1>
+      </div>
 
-            <ul
-                className={`${isMenuOpen ? 'flex flex-col' : 'hidden'
-                    } md:flex md:flex-row items-center gap-4 md:gap-6 absolute md:static top-16 left-0 w-full bg-white md:bg-transparent shadow-md md:shadow-none p-4 md:p-0 transition-all duration-300 ease-in-out transform ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-                    }`}
+      {/* CENTER: Menu (desktop) */}
+      <ul className="hidden md:flex gap-6 items-center">
+        {categories.map(category => (
+          <li key={category}>
+            <NavLink
+              to={category === 'all' ? '/' : `/${category.toLowerCase()}`}
+              onClick={() => handleCategoryClick(category)}
+              className={({ isActive }) =>
+                isActive ? activeStyle : 'text-gray-600 hover:text-indigo-600 transition-colors'
+              }
             >
-                <li className="w-full md:w-auto">
-                    <NavLink
-                        to="/"
-                        onClick={() => { toggleMenu(); }}
-                        className={({ isActive }) => isActive ? activeStyle : "text-gray-600 hover:text-blue-600 transition-colors block w-full md:inline-block"}
-                    >
-                        All
-                    </NavLink>
-                </li>
-                <li className="w-full md:w-auto">
-                    <NavLink
-                        to="/laptops"
-                        onClick={() => { toggleMenu(); }}
-                        className={({ isActive }) => isActive ? activeStyle : "text-gray-600 hover:text-blue-600 transition-colors block w-full md:inline-block"}
-                    >
-                        Laptops
-                    </NavLink>
-                </li>
-                {/* ... решта пунктів меню ... */}
-            </ul>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
 
-            <ul className="flex items-center gap-6">
-                <li className="text-gray-500">
-                    silvi@platzi.com
-                </li>
-                <li>
-                    <NavLink to="/my-orders" className={({ isActive }) => isActive ? activeStyle : "text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"}>My orders</NavLink>
-                </li>
-                <li className="flex items-center gap-2">
-                    <NavLink to="/cart-shopping" className={({ isActive }) => isActive ? activeStyle : "text-gray-600 hover:text-blue-600 transition-colors"}>
-                        <ShoppingCartIcon className="h-6 w-6 text-gray-800 hover:text-blue-600 transition-colors" />
-                    </NavLink>
-                    {productsCount === 0 ? (
-                        <div className="text-gray-500 text-sm">{productsCount}</div>
-                    ) : (
-                        <div className="flex justify-center items-center bg-blue-100 text-blue-600 w-6 h-6 rounded-full text-sm font-medium">{productsCount}</div>
-                    )}
-                </li>
-            </ul>
-        </nav>
-    );
+      {/* RIGHT: Search, Orders, Cart, Burger */}
+      <div className="flex items-center gap-4">
+        {/* Search Toggle Button (moved to right) */}
+        <button onClick={toggleSearch} className="text-gray-600 hover:text-indigo-600 transition-colors">
+          <MagnifyingGlassIcon className="h-6 w-6" />
+        </button>
+
+        <NavLink
+          to="/my-orders"
+          className={({ isActive }) =>
+            isActive ? activeStyle : 'text-gray-600 hover:text-indigo-600 transition-colors'
+          }
+        >
+          My orders
+        </NavLink>
+        <div className="relative">
+          <NavLink
+            to="/cart-shopping"
+            className={({ isActive }) =>
+              isActive ? activeStyle : 'text-gray-600 hover:text-indigo-600 transition-colors'
+            }
+          >
+            <ShoppingCartIcon className="h-6 w-6 text-gray-800" />
+          </NavLink>
+          {productsCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-indigo-100 text-indigo-600 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold">
+              {productsCount}
+            </span>
+          )}
+        </div>
+        {/* Burger Menu */}
+        <button onClick={toggleMenu} className="md:hidden">
+          {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <ul className="w-full md:hidden mt-4 bg-white shadow-md px-6 py-4 flex flex-col gap-3">
+          {categories.map(category => (
+            <li key={category}>
+              <NavLink
+                to={category === 'all' ? '/' : `/${category.toLowerCase()}`}
+                onClick={() => handleCategoryClick(category)}
+                className={({ isActive }) =>
+                  isActive ? activeStyle : 'text-gray-600 hover:text-indigo-600 transition-colors'
+                }
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Search Panel with Animation */}
+      <div
+        className={`fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-md transition-all duration-300 ease-in-out overflow-hidden ${
+          showSearch ? 'h-16' : 'h-0'
+        }`}
+      >
+        <div className="p-4">
+          <input
+            type="text"
+            value={searchByTitle}
+            onChange={(e) => setSearchByTitle(e.target.value)}
+            placeholder="Search products..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
+          />
+        </div>
+      </div>
+    </nav>
+  );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-//v2.0
-// import { NavLink, useNavigate } from 'react-router-dom';
-// import { useContext, useState } from 'react';
-// import { Context } from '../context';
-// import { ShoppingCartIcon } from '@heroicons/react/24/solid';
-// import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-
-// const activeStyle = "underline underline-offset-4 text-blue-600 font-medium";
-
-// export const NavBar = () => {
-//     const context = useContext(Context);
-//     const navigate = useNavigate();
-
-//     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-//     const toggleMenu = () => {
-//         setIsMenuOpen(!isMenuOpen);
-//     };
-
-//     const closeMenu = () => {
-//         if (isMenuOpen) setIsMenuOpen(false);
-//     };
-
-//     const handleLogoClick = () => {
-//         context.clearSearch();    // 🧹 Очистка пошуку при кліку на логотип
-//         navigate('/');            // 🔥 Перехід на головну
-//         closeMenu();              // 📱 Закриття mobile-меню
-//     };
-
-//     const handleCategoryClick = (category = '') => {
-//         context.setSearchByCategory(category); // 🔄 Фільтр по категорії
-//         context.clearSearch();                  // 🧹 Скидання текстового пошуку
-//         closeMenu();                            // 📱 Закриття mobile-меню
-//     };
-
-//     return (
-//         <nav className="flex justify-between items-center fixed top-0 w-full bg-white shadow-md z-10 py-4 px-6 md:px-10 transition-all duration-300">
-//             <div className="flex items-center">
-//                 {/* Mobile Burger Button */}
-//                 <button
-//                     className="md:hidden text-gray-800 hover:text-blue-600 p-2"
-//                     onClick={toggleMenu}
-//                 >
-//                     {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-//                 </button>
-
-//                 {/* Logo */}
-//                 <div
-//                     className="font-bold text-xl text-gray-800 cursor-pointer hover:text-blue-600 transition-colors ml-2"
-//                     onClick={handleLogoClick}
-//                 >
-//                     Shopi
-//                 </div>
-//             </div>
-
-//             {/* Categories Menu */}
-//             <ul
-//                 className={`${isMenuOpen ? 'flex flex-col' : 'hidden'} md:flex md:flex-row items-center gap-4 md:gap-6 absolute md:static top-16 left-0 w-full bg-white md:bg-transparent shadow-md md:shadow-none p-4 md:p-0 transition-all duration-300 ease-in-out transform ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
-//             >
-//                 {[
-//                     { path: '/', label: 'All', category: '' },
-//                     { path: '/laptops', label: 'Laptops', category: 'laptops' },
-//                     { path: '/tablets', label: 'Tablets', category: 'tablets' },
-//                     { path: '/cameras', label: 'Cameras', category: 'cameras' },
-//                     { path: '/headphones', label: 'Headphones', category: 'headphones' },
-//                     { path: '/cellphones', label: 'Cellphones', category: 'cellphones' },
-//                     { path: '/accessories', label: 'Accessories', category: 'accessories' }
-//                 ].map(({ path, label, category }) => (
-//                     <li key={path} className="w-full md:w-auto">
-//                         <NavLink
-//                             to={path}
-//                             onClick={() => handleCategoryClick(category)}
-//                             className={({ isActive }) =>
-//                                 isActive
-//                                     ? activeStyle
-//                                     : "text-gray-600 hover:text-blue-600 transition-colors block w-full md:inline-block"
-//                             }
-//                         >
-//                             {label}
-//                         </NavLink>
-//                     </li>
-//                 ))}
-//             </ul>
-
-//             {/* User Actions */}
-//             <ul className="flex items-center gap-6">
-//                 <li className="text-gray-500">silvi@platzi.com</li>
-//                 <li>
-//                     <NavLink
-//                         to="/my-orders"
-//                         onClick={closeMenu}
-//                         className={({ isActive }) =>
-//                             isActive
-//                                 ? activeStyle
-//                                 : "text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
-//                         }
-//                     >
-//                         My orders
-//                     </NavLink>
-//                 </li>
-//                 <li className="flex items-center gap-2">
-//                     <NavLink
-//                         to="/cart-shopping"
-//                         onClick={closeMenu}
-//                         className={({ isActive }) =>
-//                             isActive
-//                                 ? activeStyle
-//                                 : "text-gray-600 hover:text-blue-600 transition-colors"
-//                         }
-//                     >
-//                         <ShoppingCartIcon className="h-6 w-6 text-gray-800 hover:text-blue-600 transition-colors" />
-//                     </NavLink>
-//                     {context.productsCount > 0 && (
-//                         <div className="flex justify-center items-center bg-blue-100 text-blue-600 w-6 h-6 rounded-full text-sm font-medium">
-//                             {context.productsCount}
-//                         </div>
-//                     )}
-//                 </li>
-//             </ul>
-//         </nav>
-//     );
-// };

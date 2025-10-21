@@ -1,5 +1,9 @@
 import { useContext } from 'react';
 import { Layout, OrderCard } from '../components';
+import { CartContext } from '../context/CartContext'; // Правильний імпорт CartContext
+import { UIContext } from '../context/UIContext';     // <-- Додано імпорт UIContext
+
+
 import { GoToTop } from '../utils';
 // import { Context } from '../context';
 import { Link } from 'react-router-dom';
@@ -7,29 +11,31 @@ import { totalPrice } from '../utils';
 import { useCreateDate } from '../hooks';
 
 export const CartShoppingPage = () => {
-    const context = useContext(Context);
-    console.log('CartShoppingPage cartProducts:', context.cartProducts); // Діагностика
+    const { cartProducts, setCartProducts, order, setOrder } = useContext(CartContext); // Деструктуризуємо з CartContext
+    const { closeCheckoutSideMenu } = useContext(UIContext); // <-- Деструктуризуємо closeCheckoutSideMenu з UIContext
+
+    console.log('CartShoppingPage cartProducts:', cartProducts); // Діагностика
 
     const date = useCreateDate();
     GoToTop();
 
     const handleDelete = (id) => {
-        const filteredProducts = context.cartProducts.filter(prod => prod.id !== id);
-        context.setCartProducts(filteredProducts);
+        const filteredProducts = cartProducts.filter(prod => prod.id !== id);
+        setCartProducts(filteredProducts);
     };
 
     const handleCheckout = () => {
         const orderToAdd = {
             id: new Date().getTime(),
             date: date,
-            products: context.cartProducts,
-            totalProducts: context.cartProducts.length,
-            totalPrice: totalPrice(context.cartProducts)
+            products: cartProducts,
+            totalProducts: cartProducts.length,
+            totalPrice: totalPrice(cartProducts)
         };
 
-        context.setOrder([...context.order, orderToAdd]);
-        context.setCartProducts([]);
-        context.closeCheckoutSideMenu();
+        setOrder([...order, orderToAdd]); // Використовуємо setOrder з CartContext
+        setCartProducts([]); // Очищаємо кошик
+        closeCheckoutSideMenu(); // <-- Використовуємо функцію з UIContext
     };
 
     return (
@@ -40,10 +46,10 @@ export const CartShoppingPage = () => {
             <div style={{ color: 'red' }}>CartShoppingPage.jsx page</div>
             <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
                 <div className="flex-1 max-h-[70vh] overflow-y-auto pr-4">
-                    {context.cartProducts.length === 0 ? (
+                    {cartProducts.length === 0 ? ( // Використовуємо cartProducts
                         <p className="text-gray-500 text-center py-10">Your cart is empty</p>
                     ) : (
-                        context.cartProducts.map((prod) => (
+                        cartProducts.map((prod) => ( // Використовуємо cartProducts
                             <OrderCard
                                 key={prod.id}
                                 id={prod.id}
@@ -60,10 +66,10 @@ export const CartShoppingPage = () => {
                     <div className="flex justify-between items-center mb-4">
                         <span className="text-lg font-medium text-gray-700">Total:</span>
                         <span className="text-2xl font-bold text-red-600">
-                            ${totalPrice(context.cartProducts).toFixed(2)}
+                            ${totalPrice(cartProducts).toFixed(2)} {/* Використовуємо cartProducts */}
                         </span>
                     </div>
-                    {context.productsCount !== 0 && (
+                    {cartProducts.length !== 0 && ( // Перевіряємо довжину cartProducts
                         <div className="space-y-3">
                             <Link to="/my-orders/last">
                                 <button
@@ -77,7 +83,7 @@ export const CartShoppingPage = () => {
                             <button
                                 type="button"
                                 className="w-full py-3 bg-white text-red-600 border border-red-300 rounded-lg font-medium hover:bg-red-50 transition-all duration-200 shadow-sm hover:shadow-md"
-                                onClick={() => context.setCartProducts([])}
+                                onClick={() => setCartProducts([])} // Використовуємо setCartProducts
                             >
                                 Clear Cart
                             </button>

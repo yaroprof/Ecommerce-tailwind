@@ -53,14 +53,7 @@ export const App = () => {
 
 
 
-        // <ShoppingCartProvider>
-        //     <BrowserRouter>
-        //         <AppRoutes />
-        //         <NavBar />
-        //         <Footer />
-        //         <CheckoutSideMenu />
-        //     </BrowserRouter>
-        // </ShoppingCartProvider>
+
     )
 };
 
